@@ -156,15 +156,46 @@
             android:visibility="gone" />
     </LinearLayout>
 
-    <LinearLayout
+    <!-- One scrolling surface: the grid fills the whole padded area and the header block (clock, pills
+         and the section rows) overlays its top. MainActivity translates the header block up in sync with
+         the grid's scroll, so the header moves away with the content instead of staying fixed; the dock
+         still parks low through the grid's top padding, computed from the grid's (now full) height. -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
         android:paddingStart="56dp"
         android:paddingEnd="56dp"
         android:paddingTop="26dp"
         android:clipChildren="false"
         android:clipToPadding="false">
+
+        <!-- The wrapper clips at the grid's edge; the grid itself must not clip so scaled tiles can overflow their cells. -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/grid"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingTop="10dp"
+                android:paddingBottom="40dp"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:clipToPadding="false"
+                android:clipChildren="false"
+                android:overScrollMode="never"
+                android:scrollbars="none"
+                android:descendantFocusability="afterDescendants" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:id="@+id/headerBlock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:clipChildren="false"
+            android:clipToPadding="false">
 
         <!-- No clipping down to the pills: with advanced effects a focused pill scales up past its row. -->
         <RelativeLayout
@@ -205,7 +236,8 @@
                     android:orientation="horizontal"
                     android:baselineAligned="true">
 
-                    <TextClock
+                    <!-- A TextClock with a slot-machine roll on every digit change (SlotClockView). -->
+                    <com.gathin.tvhome.SlotClockView
                         android:id="@+id/clock"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -381,28 +413,93 @@
             </LinearLayout>
         </RelativeLayout>
 
-        <!-- The wrapper clips at the grid's edge; the grid itself must not clip so scaled tiles can overflow their cells. -->
-        <FrameLayout
+        <!-- Continue watching and New added: filled by HomeSections, hidden while there is nothing to show.
+             The same 4dp start inset as the greeting keeps the headings on the header's line. -->
+        <LinearLayout
+            android:id="@+id/sectionsBlock"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:layout_marginTop="10dp">
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:clipChildren="false"
+            android:clipToPadding="false">
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/grid"
+            <TextView
+                android:id="@+id/recentTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="18dp"
+                android:text="@string/continue_watching"
+                android:textColor="#8CFFFFFF"
+                android:textSize="11sp"
+                android:fontFamily="@string/font_medium"
+                android:letterSpacing="0.22"
+                android:textAllCaps="true"
+                android:visibility="gone" />
+
+            <HorizontalScrollView
+                android:id="@+id/recentScroll"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:paddingTop="10dp"
-                android:paddingBottom="40dp"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:clipToPadding="false"
-                android:clipChildren="false"
-                android:overScrollMode="never"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
                 android:scrollbars="none"
-                android:descendantFocusability="afterDescendants" />
-        </FrameLayout>
-    </LinearLayout>
+                android:overScrollMode="never"
+                android:focusable="false"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:id="@+id/recentRow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    android:clipChildren="false"
+                    android:clipToPadding="false" />
+            </HorizontalScrollView>
+
+            <TextView
+                android:id="@+id/newTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="14dp"
+                android:text="@string/new_added"
+                android:textColor="#8CFFFFFF"
+                android:textSize="11sp"
+                android:fontFamily="@string/font_medium"
+                android:letterSpacing="0.22"
+                android:textAllCaps="true"
+                android:visibility="gone" />
+
+            <HorizontalScrollView
+                android:id="@+id/newScroll"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:scrollbars="none"
+                android:overScrollMode="never"
+                android:focusable="false"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:id="@+id/newRow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    android:clipChildren="false"
+                    android:clipToPadding="false" />
+            </HorizontalScrollView>
+        </LinearLayout>
+
+        </LinearLayout>
+    </FrameLayout>
 
     <!-- The single floating glass highlight that springs between tiles. -->
     <com.gathin.tvhome.GlassView

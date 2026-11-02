@@ -182,6 +182,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean advancedEffects;
     private TextView greeting;
     private View clockBlock;
+    /** The clock, the pills and the section rows: translated up in sync with the grid scroll (not fixed). */
+    private View headerBlock;
+    /** The Continue watching and New added rows; null in layouts without them (layout-iw) and single_row. */
+    private HomeSections sections;
     private View btnInputs;
     /** config show_inputs_pill: false keeps the Inputs pill hidden even when the TV has inputs. */
     private boolean showInputsPill = true;
@@ -692,6 +696,21 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         adapter.setSavedOrder(Order.ranks(savedOrder, dockApps), Order.docked(savedOrder, dockApps));
         grid.setAdapter(adapter);
 
+        headerBlock = findViewById(R.id.headerBlock);
+        View sectionsBlock = findViewById(R.id.sectionsBlock);
+        if (sectionsBlock != null && !singleRow) sections = new HomeSections(this, sectionsBlock, adapter, grid);
+        // The whole header block (clock, pills and the section rows) rides up with the grid, like the race
+        // panel below: the top of the page scrolls away with the content instead of staying fixed. The dock
+        // parks back at offset 0, so focusing it brings the header fully back.
+        if (headerBlock != null) {
+            grid.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
+                    headerBlock.setTranslationY(rv.canScrollVertically(-1) ? -rv.computeVerticalScrollOffset() : 0);
+                }
+            });
+        }
+
         // tvOS layout: push the dock row towards the bottom of the screen, leaving room for
         // rows_below_dock grid rows under it; the rest of the grid stays below until you press Down.
         int rowsBelowDock = cfg.rowsBelowDock;
@@ -893,7 +912,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
             if (keyCode == KeyEvent.KEYCODE_DPAD_UP) return true;
             if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-                // Back to the dock tile Up came from, not wherever the focus finder lands.
+                // Through the section rows first, when they have tiles; else back to the dock tile Up came
+                // from, not wherever the focus finder lands.
+                if (sections != null && sections.focusFirst()) return true;
                 focusTile(singleRow ? lastFocused : lastFocused % COLUMNS);
                 return true;
             }
@@ -1106,6 +1127,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             default:
                 break;
         }
+        // Back from an app: its Continue watching position moved.
+        if (sections != null) sections.refresh();
         if (openLiveTvAfterBoot()) return;
         updateGreeting();
         updatePanel();
@@ -1258,6 +1281,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         lastFocusedKey = returnKey;
         lastFocused = returnSlot;
         packageSequence = currentPackageSequence(packageSequence);
+        if (sections != null) sections.refresh();
     }
 
     /**
