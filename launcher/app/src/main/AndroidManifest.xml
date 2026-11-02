@@ -21,6 +21,12 @@
     <!-- YaOS (Yandex TV OS): HDMI, AV and the tuner all play in com.yandex.tv.live, whose activities require
          this permission (protection level normal, so it is granted at install). Ignored on other TVs. -->
     <uses-permission android:name="yandex.tv.permission.ACCESS_TV_SOURCE" />
+    <!-- Fork additions for the Continue watching / New added show rows (TvShows): reading the apps'
+         Watch Next and preview-channel programs from the system TvProvider, and fetching the poster
+         art those rows point at (usually https). READ_TV_LISTINGS is dangerous-level and granted with
+         pm grant at install; without it the rows simply fall back to app tiles. -->
+    <uses-permission android:name="android.permission.READ_TV_LISTINGS" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- Android 11+ package visibility: lets the launcher list the TV apps it shows as tiles, and the
          apps that declare a module card (docs/specs/card.md). -->
